@@ -104,10 +104,16 @@ export async function onUnload() {
 }
 
 export function Settings() {
+  let partyIdInput = "";
+
   return html`
     <div>
       <button onClick=${createParty}>Create Party</button>
-      <button onClick=${() => joinParty(prompt("Enter party ID:"))}>Join Party</button>
+      <div>
+        <label for="party-id">Party ID:</label>
+        <input id="party-id" type="text" onInput=${(e) => partyIdInput = e.target.value} />
+        <button onClick=${() => joinParty(partyIdInput)}>Join Party</button>
+      </div>
       <button onClick=${leaveParty} disabled=${!storage.partyId}>Leave Party</button>
     </div>
   `;
