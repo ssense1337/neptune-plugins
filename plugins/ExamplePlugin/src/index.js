@@ -80,7 +80,7 @@ socket.on("playbackUpdate", (data) => {
     // Sync playback with the host
     const { item: currentlyPlaying } = currentMediaItem;
 
-    const trackId = data.mediaInfo.id
+    const trackId = data.mediaInfo.id;
     if (currentlyPlaying.id !== trackId) {
       // Change the track if necessary
       fetchAndPlayMediaItem({
@@ -134,6 +134,8 @@ export function Settings() {
       ${storage.partyId
         ? html`
           <div>
+            <h3>Connected to Party:</h3>
+            <div>Party ID: ${storage.partyId}</div>
             <h3>Listeners:</h3>
             <ul>
               ${storage.listeners.map(listener => html`<li>${listener}</li>`)}
