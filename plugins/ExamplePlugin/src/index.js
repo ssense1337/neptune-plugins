@@ -60,8 +60,9 @@ const createParty = () => {
   });
 };
 
-const leaveParty = () => {
-  socket.emit("leaveParty", { partyId: storage.partyId });
+const leaveParty = (partyEnded=false) => {
+  if (!partyEnded)
+    socket.emit("leaveParty", { partyId: storage.partyId });
   storage.partyId = null;
   storage.isHost = false;
   storage.listeners = [];
@@ -113,6 +114,7 @@ socket.on("updateListeners", (listeners) => {
 
 socket.on("partyEnded", () => {
   messageInfo({ message: "The listening party is over!" });
+  leaveParty(true);
 });
 
 export async function onUnload() {
