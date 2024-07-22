@@ -1,10 +1,114 @@
-// You can put anything you want in the body of your plugin code.
-import confetti from "canvas-confetti";
+import { store, intercept, currentMediaItem } from "@neptune";
+import { getMediaURLFromID } from "@neptune/utils";
+import { fetchAndPlayMediaItem } from "@neptune/actions/content";
+import { play, pause, seek } from "@neptune/actions/playbackControls";
+import { html } from "@neptune/voby";
+import { storage } from "@plugin";
+import { io } from "socket.io-client";
 
-console.log("Hello world!")
-confetti()
+const unloadables = [];
 
-// This is where you would typically put cleanup code.
-export function onUnload() {
-  console.log("Goodbye world!");
+const socket = io("ws://localhost:3000"); // Replace with your server URL
+
+storage.partyId ??= null;
+storage.isHost ??= false;
+
+const syncPlayback = (current) => {
+  const state = store.getState();
+  const { item: currentlyPlaying, type: mediaType } = currentMediaItem;
+
+  // TODO: add video support
+  if (mediaType != "track") return;
+
+  const albumArtURL = getMediaURLFromID(currentlyPlaying.album.cover);
+
+  const date = new Date();
+  const now = (date.getTime() / 1000) | 0;
+  const remaining = date.setSeconds(
+    date.getSeconds() + (currentlyPlaying.duration - current)
+  );
+
+  const paused = state.playbackControls.playbackState == "NOT_PLAYING";
+
+  socket.emit("syncPlayback", {
+    currentTime: current,
+    isPaused: paused,
+    mediaInfo: {
+      id: currentlyPlaying.id,
+      title: currentlyPlaying.title,
+      artists: currentlyPlaying.artists.map((a) => a.name).join(", "),
+      album: currentlyPlaying.album.title,
+      albumArtURL: albumArtURL,
+    },
+    timestamp: now,
+    remaining: remaining,
+  });
+};
+
+const joinParty = (partyId) => {
+  storage.partyId = partyId;
+  storage.isHost = false;
+  socket.emit("joinParty", { partyId });
+};
+
+const createParty = () => {
+  storage.isHost = true;
+  socket.emit("createParty", (partyId) => {
+    storage.partyId = partyId;
+  });
+};
+
+const leaveParty = () => {
+  socket.emit("leaveParty", { partyId: storage.partyId });
+  storage.partyId = null;
+  storage.isHost = false;
+};
+
+unloadables.push(
+  intercept("playbackControls/TIME_UPDATE", ([current]) => {
+    if (storage.partyId) {
+      syncPlayback(current);
+    }
+  })
+);
+
+socket.on("playbackUpdate", (data) => {
+  if (!storage.isHost) {
+    // Sync playback with the host
+    const { item: currentlyPlaying } = currentMediaItem;
+    
+    const trackId = data.mediaInfo.id
+    if (currentlyPlaying.id !== trackId) {
+      // Change the track if necessary
+      fetchAndPlayMediaItem({
+        itemId: trackId,
+        itemType: "track",
+      });
+    }
+    
+    if (data.isPaused) {
+      pause();
+    } else {
+      seek(data.currentTime);
+      play();
+    }
+  }
+});
+
+export async function onUnload() {
+  unloadables.forEach((u) => u());
+
+  try {
+    leaveParty();
+  } catch {}
+}
+
+export function Settings() {
+  return html`
+    <div>
+      <button onClick=${createParty}>Create Party</button>
+      <button onClick=${() => joinParty(prompt("Enter party ID:"))}>Join Party</button>
+      <button onClick=${leaveParty} disabled=${!storage.partyId}>Leave Party</button>
+    </div>
+  `;
 }
