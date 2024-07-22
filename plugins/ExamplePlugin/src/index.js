@@ -86,6 +86,7 @@ socket.on("playbackUpdate", (data) => {
       fetchAndPlayMediaItem({
         itemId: trackId,
         itemType: "track",
+        sourceContext: { type: "user" },
       });
     }
 
