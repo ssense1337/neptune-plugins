@@ -104,7 +104,6 @@ socket.on("updateListeners", (listeners) => {
 
 socket.on("partyEnded", () => {
   messageInfo({ message: "The listening party is over!" });
-  leaveParty();
 });
 
 export async function onUnload() {
@@ -113,6 +112,8 @@ export async function onUnload() {
   try {
     leaveParty();
   } catch {}
+
+  socket.disconnect();
 }
 
 export function Settings() {
