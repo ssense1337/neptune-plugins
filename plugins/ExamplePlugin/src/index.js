@@ -109,6 +109,9 @@ export function Settings() {
   return html`
     <div>
       <button onClick=${createParty}>Create Party</button>
+      ${storage.partyId && storage.isHost
+        ? html`<div>Your Party ID: ${storage.partyId}</div>`
+        : ""}
       <div>
         <label for="party-id">Party ID:</label>
         <input id="party-id" type="text" onInput=${(e) => partyIdInput = e.target.value} />
