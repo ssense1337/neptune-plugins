@@ -29,7 +29,7 @@ const createButton = (trackRow, trackId) => {
 
     return html`
         <button
-            ${Object.entries(buttonAttributes).map(([key, value]) => html`${key}=${value}`)}
+            ${Object.entries(buttonAttributes).map(([key, value]) => `${key}="${value}"`).join(" ")}
             data-test="quick-queue"
             aria-label=${label}
             title=${label}
@@ -50,7 +50,7 @@ const createButton = (trackRow, trackId) => {
                 actions.message.messageInfo({ message: "Added to play queue" });
             }}
         >
-            <svg ${Object.entries(svgAttributes).map(([key, value]) => html`${key}=${value}`)}>
+            <svg ${Object.entries(svgAttributes).map(([key, value]) => `${key}="${value}"`).join(" ")}>
                 <use href=${`#${icon}`}></use>
             </svg>
         </button>
