@@ -8,7 +8,7 @@ import { io } from "socket.io-client";
 
 const unloadables = [];
 
-const socket = io("ws://localhost:3000"); // Replace with your server URL
+const socket = io("wss://listen.ssense.eu.org"); // Replace with your server URL
 
 storage.partyId ??= null;
 storage.isHost ??= false;
