@@ -2,6 +2,7 @@ import { store, intercept, currentMediaItem } from "@neptune";
 import { getMediaURLFromID } from "@neptune/utils";
 import { fetchAndPlayMediaItem } from "@neptune/actions/content";
 import { play, pause, seek } from "@neptune/actions/playbackControls";
+import { messageInfo } from "@neptune/actions/message";
 import { html } from "@neptune/voby";
 import { storage } from "@plugin";
 import { io } from "socket.io-client";
@@ -12,6 +13,7 @@ const socket = io("wss://listen.ssense.eu.org"); // Replace with your server URL
 
 storage.partyId ??= null;
 storage.isHost ??= false;
+storage.listeners ??= [];
 
 const syncPlayback = (current) => {
   const state = store.getState();
@@ -62,6 +64,7 @@ const leaveParty = () => {
   socket.emit("leaveParty", { partyId: storage.partyId });
   storage.partyId = null;
   storage.isHost = false;
+  storage.listeners = [];
 };
 
 unloadables.push(
@@ -76,7 +79,7 @@ socket.on("playbackUpdate", (data) => {
   if (!storage.isHost) {
     // Sync playback with the host
     const { item: currentlyPlaying } = currentMediaItem;
-    
+
     const trackId = data.mediaInfo.id
     if (currentlyPlaying.id !== trackId) {
       // Change the track if necessary
@@ -85,7 +88,7 @@ socket.on("playbackUpdate", (data) => {
         itemType: "track",
       });
     }
-    
+
     if (data.isPaused) {
       pause();
     } else {
@@ -93,6 +96,15 @@ socket.on("playbackUpdate", (data) => {
       play();
     }
   }
+});
+
+socket.on("updateListeners", (listeners) => {
+  storage.listeners = listeners;
+});
+
+socket.on("partyEnded", () => {
+  messageInfo({ message: "The listening party is over!" });
+  leaveParty();
 });
 
 export async function onUnload() {
@@ -118,6 +130,16 @@ export function Settings() {
         <button onClick=${() => joinParty(partyIdInput)}>Join Party</button>
       </div>
       <button onClick=${leaveParty} disabled=${!storage.partyId}>Leave Party</button>
+      ${storage.partyId
+        ? html`
+          <div>
+            <h3>Listeners:</h3>
+            <ul>
+              ${storage.listeners.map(listener => html`<li>${listener}</li>`)}
+            </ul>
+          </div>
+        `
+        : ""}
     </div>
   `;
 }
