@@ -83,18 +83,26 @@ socket.on("playbackUpdate", (data) => {
     const trackId = data.mediaInfo.id;
     if (currentlyPlaying.id !== trackId) {
       // Change the track if necessary
+      const unintercept = intercept("playbackControls/MEDIA_PRODUCT_TRANSITION",  ([{ playbackContext }]) => {
+        if (playbackContext.actualProductId != trackId) return;
+
+        seek(data.currentTime);
+        unintercept();
+      });
+      unloadables.push(unintercept);
+
       fetchAndPlayMediaItem({
         itemId: trackId,
         itemType: "track",
         sourceContext: { type: "user" },
       });
-    }
-
-    if (data.isPaused) {
-      pause();
     } else {
       seek(data.currentTime);
-      play();
+      if (data.isPaused) {
+        pause();
+      } else {
+        play();
+      }
     }
   }
 });
