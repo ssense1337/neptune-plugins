@@ -1,5 +1,5 @@
 import { actions, store } from "@neptune";
-import { ReactiveRoot } from "@neptune/componoents";
+import { ReactiveRoot } from "@neptune/components";
 import { html } from "@neptune/voby";
 
 import { isElement } from "./lib/isElement";
