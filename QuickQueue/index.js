@@ -5,7 +5,7 @@ var c=t=>t?.nodeType===Node.ELEMENT_NODE;import{actions as d,store as m,intercep
             aria-label=${a}
             title=${a}
             style="padding: 4px;"
-            onClick=${async()=>{let{elements:s,currentIndex:x}=m.getState().playQueue;for(let i=x+1;i<s.length&&s[i].priority==="priority_keep";i++)if(s[i].mediaItemId===e){d.playQueue.removeAtIndex({index:i}),d.message.messageInfo({message:"Removed from play queue"});return}d.playQueue.addLast({mediaItemIds:[e],context:{type:"user"}}),d.message.messageInfo({message:"Added to play queue"})}}
+            onClick=${async()=>{let{elements:s,currentIndex:x}=m.getState().playQueue;for(let i=x+1;i<s.length&&s[i].priority==="priority_keep";i++)if(s[i].mediaItemId===e){d.playQueue.removeAtIndex({index:i}),d.message.messageInfo({message:"Removed from play queue"}),n(!1);return}d.playQueue.addLast({mediaItemIds:[e],context:{type:"user"}}),d.message.messageInfo({message:"Added to play queue"}),n(!0)}}
         >
             <svg ...${v}>
                 <use href=${u}></use>
