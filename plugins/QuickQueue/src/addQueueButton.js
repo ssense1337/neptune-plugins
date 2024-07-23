@@ -1,8 +1,35 @@
 import { actions, store } from "@neptune";
 import { ReactiveRoot } from "@neptune/components";
-import { html } from "@neptune/voby";
+import { $, html } from "@neptune/voby";
 
 import { isElement } from "./lib/isElement";
+
+const isInQueueMap = new Map();
+
+export const setupInterceptors = () => [
+    intercept("playQueue/ADD_MEDIA_ITEMS_TO_QUEUE",  ([{ mediaItemIds }]) => {
+        mediaItemIds.forEach(trackId => {
+            if (isInQueueMap.has(trackId)) {
+                isInQueueMap.get(trackId)(true);
+            }
+        });
+    }),
+    intercept("playQueue/REMOVE_ELEMENT",  ([{ uid }]) => {
+        const playQueue = store.getState().playQueue;
+        const currentIndex = playQueue.currentIndex;
+        for (let i = currentIndex + 1; i < playQueue.elements.length; i++) {
+            if (playQueue.elements[i].priority !== "priority_keep") break;
+
+            if (playQueue.elements[i].uid === uid) {
+                const trackId = playQueue.elements[i].mediaItemId;
+                if (isInQueueMap.has(trackId)) {
+                    isInQueueMap.get(trackId)(false);
+                }
+                return;
+            }
+        }
+    })
+];
 
 const cloneButtonAttributes = (sourceButton) => {
     const attributes = sourceButton.attributes;
@@ -15,8 +42,15 @@ const cloneButtonAttributes = (sourceButton) => {
 };
 
 const createButton = (trackRow, trackId) => {
-    const { elements } = store.getState().playQueue;
-    const isInQueue = elements.some(element => element.mediaItemId === trackId);
+    const isInQueue = $(false);
+    const { elements, currentIndex } = store.getState().playQueue;
+    for (let i = currentIndex + 1; i < elements.length; i++) {
+        if (elements[i].priority !== "priority_keep") break;
+
+        if (elements[i].mediaItemId === trackId)
+            isInQueue(true);
+    }
+    isInQueueMap.set(trackId, isInQueue);
     const icon = isInQueue ? "detail-view__trashcan" : "player__queue-add";
     const label = isInQueue ? "Remove from queue" : "Add to queue";
 
@@ -29,7 +63,7 @@ const createButton = (trackRow, trackId) => {
 
     return html`
         <button
-            ${Object.entries(buttonAttributes).map(([key, value]) => `${key}="${value}"`).join(" ")}
+            ...${buttonAttributes}
             data-test="quick-queue"
             aria-label=${label}
             title=${label}
@@ -50,7 +84,7 @@ const createButton = (trackRow, trackId) => {
                 actions.message.messageInfo({ message: "Added to play queue" });
             }}
         >
-            <svg ${Object.entries(svgAttributes).map(([key, value]) => `${key}="${value}"`).join(" ")}>
+            <svg ...${svgAttributes}>
                 <use href=${`#${icon}`}></use>
             </svg>
         </button>
@@ -58,16 +92,16 @@ const createButton = (trackRow, trackId) => {
 };
 
 const addButton = (trackRow, name, sourceSelector, newElement, beforeSelector) => {
-	let element = trackRow.querySelector(`button[data-test="${name}"]`);
-	if (element !== null) return;
+    let element = trackRow.querySelector(`button[data-test="${name}"]`);
+    if (element !== null) return;
 
-	const sourceElement = trackRow.querySelector(sourceSelector);
-	if (sourceElement === null) return;
+    const sourceElement = trackRow.querySelector(sourceSelector);
+    if (sourceElement === null) return;
 
     element = newElement;
-	if (isElement(element)) {
-		return sourceElement.parentElement.insertBefore(element, beforeSelector instanceof Element ? beforeSelector : beforeSelector ? trackRow.querySelector(beforeSelector) : sourceElement);
-	}
+    if (isElement(element)) {
+        return sourceElement.parentElement.insertBefore(element, beforeSelector instanceof Element ? beforeSelector : beforeSelector ? trackRow.querySelector(beforeSelector) : sourceElement);
+    }
 };
 
 export const addQueueButton = (trackRow, trackId) => {

@@ -1,5 +1,7 @@
 import { isElement } from "./lib/isElement";
-import { addQueueButton } from "./addQueueButton";
+import { addQueueButton, setupInterceptors } from "./addQueueButton";
+
+const unloadables = [];
 
 const observer = new MutationObserver((mutationsList) => {
 	for (const mutation of mutationsList) {
@@ -27,6 +29,9 @@ export const updateObserver = () => {
 };
 updateObserver();
 
+unloadables.push(...setupInterceptors);
+
 export const onUnload = () => {
-	observer.disconnect();
+  unloadables.forEach((u) => u());
+  observer.disconnect();
 };
