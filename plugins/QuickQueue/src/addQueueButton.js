@@ -1,6 +1,6 @@
 import { actions, store, intercept } from "@neptune";
 import { ReactiveRoot } from "@neptune/components";
-import { $, html } from "@neptune/voby";
+import { $, html, useMemo } from "@neptune/voby";
 
 import { isElement } from "./lib/isElement";
 
@@ -51,8 +51,8 @@ const createButton = (trackRow, trackId) => {
             isInQueue(true);
     }
     isInQueueMap.set(Number(trackId), isInQueue);
-    const icon = isInQueue ? "detail-view__trashcan" : "player__queue-add";
-    const label = isInQueue ? "Remove from queue" : "Add to queue";
+    const icon = useMemo(() => isInQueue() ? "detail-view__trashcan" : "player__queue-add");
+    const label = useMemo(() => isInQueue() ? "Remove from queue" : "Add to queue");
 
     // Find the original button
     const originalButton = trackRow.querySelector('button[data-test="add-to-playlist-button"]');
