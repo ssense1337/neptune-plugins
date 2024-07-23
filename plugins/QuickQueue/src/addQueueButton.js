@@ -1,4 +1,4 @@
-import { actions, store } from "@neptune";
+import { actions, store, intercept } from "@neptune";
 import { ReactiveRoot } from "@neptune/components";
 import { $, html } from "@neptune/voby";
 
