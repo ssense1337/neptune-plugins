@@ -51,7 +51,7 @@ const createButton = (trackRow, trackId) => {
             isInQueue(true);
     }
     isInQueueMap.set(Number(trackId), isInQueue);
-    const icon = useMemo(() => "#" + isInQueue() ? "detail-view__trashcan" : "player__queue-add");
+    const icon = useMemo(() => "#" + (isInQueue() ? "detail-view__trashcan" : "player__queue-add"));
     const label = useMemo(() => isInQueue() ? "Remove from queue" : "Add to queue");
 
     // Find the original button
