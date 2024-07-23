@@ -50,7 +50,7 @@ const createButton = (trackRow, trackId) => {
         if (elements[i].mediaItemId === trackId)
             isInQueue(true);
     }
-    isInQueueMap.set(Number(trackId), isInQueue);
+    isInQueueMap.set(trackId, isInQueue);
     const icon = useMemo(() => "#" + (isInQueue() ? "detail-view__trashcan" : "player__queue-add"));
     const label = useMemo(() => isInQueue() ? "Remove from queue" : "Add to queue");
 
@@ -105,6 +105,6 @@ const addButton = (trackRow, name, sourceSelector, newElement, beforeSelector) =
 };
 
 export const addQueueButton = (trackRow, trackId) => {
-    const button = createButton(trackRow, trackId);
+    const button = createButton(trackRow, Number(trackId));
     addButton(trackRow, "quick-queue", 'button[data-test="add-to-playlist-button"]', ReactiveRoot({ children: button }), 'button[data-test="add-to-playlist-button"]');
 };
