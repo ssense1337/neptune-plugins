@@ -107,6 +107,6 @@ const addButton = (trackRow, name, sourceSelector, newElement, beforeSelector) =
 };
 
 export const addQueueButton = (trackRow, trackId) => {
-    const button = createButton(trackRow, Number(trackId));
+    const button = () => createButton(trackRow, Number(trackId));
     addButton(trackRow, "quick-queue", 'button[data-test="add-to-playlist-button"]', ReactiveRoot({ children: button }), 'button[data-test="add-to-playlist-button"]');
 };
