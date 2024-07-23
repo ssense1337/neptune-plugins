@@ -7,7 +7,8 @@ import { isElement } from "./lib/isElement";
 const isInQueueMap = new Map();
 
 export const setupInterceptors = () => [
-    intercept("playQueue/ADD_MEDIA_ITEMS_TO_QUEUE",  ([{ mediaItemIds }]) => {
+    intercept("playQueue/ADD_MEDIA_ITEMS_TO_QUEUE",  (a) => {
+        const [{ mediaItemIds }] = a;
         mediaItemIds.forEach(trackId => {
             if (isInQueueMap.has(trackId)) {
                 isInQueueMap.get(trackId)(true);
