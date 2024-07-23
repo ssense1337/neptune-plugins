@@ -50,7 +50,7 @@ const createButton = (trackRow, trackId) => {
         if (elements[i].mediaItemId === trackId)
             isInQueue(true);
     }
-    isInQueueMap.set(trackId, isInQueue);
+    isInQueueMap.set(Number(trackId), isInQueue);
     const icon = isInQueue ? "detail-view__trashcan" : "player__queue-add";
     const label = isInQueue ? "Remove from queue" : "Add to queue";
 
