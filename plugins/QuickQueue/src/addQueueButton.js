@@ -76,12 +76,14 @@ const createButton = (trackRow, trackId) => {
                     if (elements[i].mediaItemId === trackId) {
                         actions.playQueue.removeAtIndex({ index: i });
                         actions.message.messageInfo({ message: "Removed from play queue" });
+                        isInQueue(false);
                         return;
                     }
                 }
 
                 actions.playQueue.addLast({ mediaItemIds: [trackId], context: { type: "user" } });
                 actions.message.messageInfo({ message: "Added to play queue" });
+                isInQueue(true);
             }}
         >
             <svg ...${svgAttributes}>
