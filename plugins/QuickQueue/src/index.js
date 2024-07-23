@@ -29,7 +29,7 @@ export const updateObserver = () => {
 };
 updateObserver();
 
-unloadables.push(...setupInterceptors);
+unloadables.push(...setupInterceptors());
 
 export const onUnload = () => {
   unloadables.forEach((u) => u());
