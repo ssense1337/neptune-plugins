@@ -36,8 +36,12 @@ export const setupInterceptors = () => [
         for (let i = currentIndex + 1; i < playQueue.elements.length; i++) {
             if (playQueue.elements[i].priority !== "priority_keep") break;
 
-            if (playQueue.elements[i].mediaItemId === trackId) {
+            const mediaItemId = playQueue.elements[i].mediaItemId;
+            if (mediaItemId === trackId) {
                 return;
+            }
+            if (isInQueueMap.has(mediaItemId)) {
+                isInQueueMap.get(mediaItemId)(true);
             }
         }
         if (isInQueueMap.has(trackId)) {
