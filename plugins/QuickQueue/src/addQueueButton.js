@@ -30,7 +30,7 @@ export const setupInterceptors = () => [
         }
     }),
     intercept("playbackControls/MEDIA_PRODUCT_TRANSITION",  ([{ playbackContext }]) => {
-        const trackId = playbackContext.actualProductId;
+        const trackId = Number(playbackContext.actualProductId);
         const playQueue = store.getState().playQueue;
         const currentIndex = playQueue.currentIndex;
         for (let i = currentIndex + 1; i < playQueue.elements.length; i++) {
