@@ -1,0 +1,6 @@
+{
+  "name": "Volume Scroll",
+  "description": "Change volume by scrolling on the icon",
+  "author": "relative <hi@relative.im>",
+  "main": "./src/index.js"
+}
