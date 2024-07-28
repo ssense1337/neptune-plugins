@@ -8,12 +8,54 @@ import { storage } from "@plugin";
 import { io } from "socket.io-client";
 
 const unloadables = [];
-
-const socket = io("wss://listen.ssense.eu.org");
+let socket;
 
 storage.partyId ??= null;
 storage.isHost ??= false;
 storage.listeners ??= [];
+
+const connectSocket = () => {
+  socket = io("wss://listen.ssense.eu.org");
+
+  socket.on("playbackUpdate", (data) => {
+    if (!storage.isHost) {
+      const { item: currentlyPlaying } = currentMediaItem;
+
+      const trackId = data.mediaInfo.id;
+      if (currentlyPlaying.id !== trackId) {
+        const unintercept = intercept("playbackControls/MEDIA_PRODUCT_TRANSITION", ([{ playbackContext }]) => {
+          if (playbackContext.actualProductId != trackId) return;
+
+          seek(data.currentTime);
+          unintercept();
+        });
+        unloadables.push(unintercept);
+
+        fetchAndPlayMediaItem({
+          itemId: trackId,
+          itemType: "track",
+          sourceContext: { type: "user" },
+        });
+      } else {
+        seek(data.currentTime);
+        if (data.isPaused) {
+          pause();
+        } else {
+          play();
+        }
+      }
+    }
+  });
+
+  socket.on("updateListeners", (listeners) => {
+    storage.listeners = listeners;
+  });
+
+  socket.on("partyEnded", () => {
+    messageInfo({ message: "The listening party is over!" });
+    leaveParty(true);
+  });
+};
 
 const syncPlayback = (current) => {
   const state = store.getState();
@@ -50,22 +92,25 @@ const syncPlayback = (current) => {
 const joinParty = (partyId) => {
   storage.partyId = partyId;
   storage.isHost = false;
+  connectSocket();
   socket.emit("joinParty", { partyId });
 };
 
 const createParty = () => {
   storage.isHost = true;
+  connectSocket();
   socket.emit("createParty", (partyId) => {
     storage.partyId = partyId;
   });
 };
 
-const leaveParty = (partyEnded=false) => {
-  if (!partyEnded)
-    socket.emit("leaveParty", { partyId: storage.partyId });
+const leaveParty = (partyEnded = false) => {
+  if (!partyEnded) socket.emit("leaveParty", { partyId: storage.partyId });
   storage.partyId = null;
   storage.isHost = false;
   storage.listeners = [];
+  socket.disconnect();
+  socket = null;
 };
 
 unloadables.push(
@@ -76,47 +121,6 @@ unloadables.push(
   })
 );
 
-socket.on("playbackUpdate", (data) => {
-  if (!storage.isHost) {
-    // Sync playback with the host
-    const { item: currentlyPlaying } = currentMediaItem;
-
-    const trackId = data.mediaInfo.id;
-    if (currentlyPlaying.id !== trackId) {
-      // Change the track if necessary
-      const unintercept = intercept("playbackControls/MEDIA_PRODUCT_TRANSITION",  ([{ playbackContext }]) => {
-        if (playbackContext.actualProductId != trackId) return;
-
-        seek(data.currentTime);
-        unintercept();
-      });
-      unloadables.push(unintercept);
-
-      fetchAndPlayMediaItem({
-        itemId: trackId,
-        itemType: "track",
-        sourceContext: { type: "user" },
-      });
-    } else {
-      seek(data.currentTime);
-      if (data.isPaused) {
-        pause();
-      } else {
-        play();
-      }
-    }
-  }
-});
-
-socket.on("updateListeners", (listeners) => {
-  storage.listeners = listeners;
-});
-
-socket.on("partyEnded", () => {
-  messageInfo({ message: "The listening party is over!" });
-  leaveParty(true);
-});
-
 export async function onUnload() {
   unloadables.forEach((u) => u());
 
@@ -124,7 +128,9 @@ export async function onUnload() {
     leaveParty();
   } catch {}
 
-  socket.disconnect();
+  if (socket) {
+    socket.disconnect();
+  }
 }
 
 export function Settings() {
